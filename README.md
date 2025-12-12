@@ -687,6 +687,12 @@ kubectl create secret generic regcred --from-file=.dockerconfigjson=./.docker/co
 
 ```
 
+## Spring boot application - Observability
+```xml
+Please check the projects under OpenTelemetry folder
+
+```
+
 ## Github actions
 ```xml
 Select the project in Google developer console -> IAM & ADMIN -> Service Accounts 
