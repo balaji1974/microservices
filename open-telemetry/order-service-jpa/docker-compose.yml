@@ -1,0 +1,42 @@
+services:
+    order-service-jpa:
+        container_name: order-service-jpa
+        build: ./
+        environment:
+            - OTEL_SERVICE_NAME=order-service-jpa
+            - OTEL_METRICS_EXPORTER=console
+            - OTEL_TRACES_EXPORTER=jaeger
+            - OTEL_LOGS_EXPORTER=console    
+        ports: 
+            - "8080:8080"
+        depends_on:
+            - postgres
+            - jaeger
+    
+    jaeger:
+        container_name: jaeger
+        image: jaegertracing/all-in-one:latest
+        environment:
+            - COLLECTOR_OTLP_ENABLED=true
+        ports:
+            - "16686:16686"
+            - "4317:4317"
+            - "5775:5775/udp"
+            - "6831:6831/udp"
+            - "6832:6832/udp"
+            - "5778:5778"
+            - "14268:14268"
+            - "14250:14250"
+            - "4318:4318"
+            - "9411:9411"
+
+    postgres:
+        container_name: postgres
+        image: postgres:latest
+        restart: always
+        environment:
+          - POSTGRES_DB=opentelementry
+          - POSTGRES_PASSWORD=secret
+          - POSTGRES_USER=myuser
+        ports:
+          - "5432:5432"
