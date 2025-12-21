@@ -554,6 +554,95 @@ docker compose down
 
 ``` 
 
+## Push OpenTelemetry trace data to Zipkin 
+```xml
+1. Run zipkin on docker
+Create a docker-compose.yml file
+services:
+    zipkin:
+        image: openzipkin/zipkin:latest
+        container_name: zipkin
+        ports:
+            - "9411:9411"
+
+
+2. Run the docker zipkin container
+docker compose up -d
+
+3. Make sure Zipkin is running:
+http://localhost:9411/
+
+4. Create a spring boot app with the following dependencies:
+<dependency>
+	<groupId>org.springframework.boot</groupId>
+	<artifactId>spring-boot-starter-web</artifactId>
+</dependency>
+
+<dependency>
+	<groupId>org.springframework.boot</groupId>
+	<artifactId>spring-boot-devtools</artifactId>
+	<scope>runtime</scope>
+	<optional>true</optional>
+</dependency>
+
+<!-- Spring Boot Actuator for tracing and health endpoints -->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-actuator</artifactId>
+</dependency>
+
+<!-- Bridge Spring/Micrometer Observations to OpenTelemetry -->
+<dependency>
+	<groupId>io.micrometer</groupId>
+	<artifactId>micrometer-tracing-bridge-otel</artifactId>
+</dependency>
+
+<!-- Export spans to Zipkin -->
+<dependency>
+	<groupId>io.opentelemetry</groupId>
+	<artifactId>opentelemetry-exporter-zipkin</artifactId>
+</dependency>
+
+5. Export the traces to zipkin by configuring in the application.properties
+# Tracing
+management.tracing.sampling.probability=1.0
+# Export traces to Zipkin
+management.tracing.export.zipkin.endpoint=http://localhost:9411/api/v2/spans
+
+6. Create a simple controller:
+@RestController
+@RequestMapping ("/orders")
+public class OrderController {
+	
+	private final ObservationRegistry observationRegistry;
+	
+	public OrderController(ObservationRegistry observationRegistry) {
+	    this.observationRegistry = observationRegistry;
+	}
+
+	@GetMapping ("/{id}")
+	public Order findbyId(@PathVariable Long id) {
+		return new Order(id, 1L, ZonedDateTime.now(), BigDecimal.TEN);
+	}
+	
+}
+
+7. Run the application
+8. Excute the curl command:
+curl --location 'http://localhost:8080/orders/1'
+curl --location 'http://localhost:8080/orders/2'
+curl --location 'http://localhost:8080/orders/3'
+
+9. View the traces on Zipkin
+http://localhost:9411/
+Click Run Query 
+
+10. Stop the application and bring the docker container down.
+docker compose down
+
+
+``` 
+
 ## Reference
 ```xml
 https://www.youtube.com/playlist?list=PLLMxXO6kMiNg6EcNCx6C6pydmgUlDDcZY
